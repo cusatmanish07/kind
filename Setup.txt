@@ -1,0 +1,349 @@
+1. Install Kind on MacOs
+brew install kind
+
+2. Check the kind version
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind --version
+kind version 0.24.0
+
+3. Check if you have more than one docker context installed in your system
+
+manishkumarroy@Manishs-MacBook-Pro kind % docker context ls
+NAME                TYPE                DESCRIPTION                               DOCKER ENDPOINT                                        KUBERNETES ENDPOINT                 ORCHESTRATOR
+default *           moby                Current DOCKER_HOST based configuration   unix:///var/run/docker.sock                            https://127.0.0.1:60485 (default)   swarm
+desktop-linux       moby                                                          unix:///Users/manishkumarroy/.docker/run/docker.sock
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+4. Create a single node kind cluster
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind create cluster
+Creating cluster "kind" ...
+ ✓ Ensuring node image (kindest/node:v1.31.0) 🖼
+ ✓ Preparing nodes 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
+Set kubectl context to "kind-kind"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-kind
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+
+
+5. You can now use your cluster with:
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl cluster-info --context kind-kind
+Kubernetes control plane is running at https://127.0.0.1:60485
+CoreDNS is running at https://127.0.0.1:60485/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+6. Get the cluster info:
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl cluster-info
+Kubernetes control plane is running at https://127.0.0.1:60485
+CoreDNS is running at https://127.0.0.1:60485/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+7. Get the node details
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl get nodes
+NAME                 STATUS   ROLES           AGE     VERSION
+kind-control-plane   Ready    control-plane   8m50s   v1.31.0
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+8. Delete the Cluster
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind delete cluster
+Deleting cluster "kind" ...
+Deleted nodes: ["kind-control-plane"]
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+9. Check if any other clusters exist
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind get clusters
+No kind clusters found.
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+
+                                           SETUP MULTI NODE CLUSTER
+
+
+1. Create a multi-node config file (multi-node-config.yaml )with the content in this repository.
+
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: multi-node-cluster
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+
+
+2. Create a multinode cluster using below command
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind create cluster --config kind-multi-node-config.yaml --kubeconfig $TMPDIR/kind-multi-node-config
+Creating cluster "multi-node-cluster" ...
+ ✓ Ensuring node image (kindest/node:v1.31.0) 🖼
+ ✓ Preparing nodes 📦 📦 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-multi-node-cluster"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-multi-node-cluster --kubeconfig /var/folders/qs/bgb_rp717zg_t8w3kp493r9h0000gn/T//kind-multi-node-config
+
+Have a question, bug, or feature request? Let us know! https://kind.sigs.k8s.io/#community 🙂
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+3. Execute the command as output of the previous stage.
+    You can now use your cluster with:
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl cluster-info --context kind-multi-node-cluster --kubeconfig /var/folders/qs/bgb_rp717zg_t8w3kp493r9h0000gn/T//kind-multi-node-config
+Kubernetes control plane is running at https://127.0.0.1:61347
+CoreDNS is running at https://127.0.0.1:61347/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+3. Get the node details:
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl get nodes --kubeconfig $TMPDIR/kind-multi-node-config
+NAME                               STATUS   ROLES           AGE     VERSION
+multi-node-cluster-control-plane   Ready    control-plane   5m14s   v1.31.0
+multi-node-cluster-worker          Ready    <none>          5m1s    v1.31.0
+multi-node-cluster-worker2         Ready    <none>          5m1s    v1.31.0
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+4. Delete the cluster
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind delete clusters multi-node-cluster
+Deleted nodes: ["multi-node-cluster-control-plane" "multi-node-cluster-worker" "multi-node-cluster-worker2"]
+Deleted clusters: ["multi-node-cluster"]
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+
+                                   SETUP MULTI NODE HIGH AVAILABLE CLUSTER
+
+ KindD is also kind enough to create HA Clusters with multiple control plane nodes for redundancy.
+
+ 1. Create a HA Multi-node-config(ha-multi-node-config.yaml) file in your repo with below contents:
+
+ kind: Cluster
+ apiVersion: kind.x-k8s.io/v1alpha4
+ name: ha-multi-node-cluster
+ nodes:
+   - role: control-plane
+   - role: control-plane
+   - role: control-plane
+   - role: worker
+   - role: worker
+
+2. Create the Cluster
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind create cluster --config kind-ha-multi-node-config.yaml --kubeconfig $TMPDIR/kind-ha-multi-node-config
+Creating cluster "ha-multi-node-cluster" ...
+ ✓ Ensuring node image (kindest/node:v1.31.0) 🖼
+ ✓ Preparing nodes 📦 📦 📦 📦 📦
+ ✓ Configuring the external load balancer ⚖️
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
+ ✓ Joining more control-plane nodes 🎮
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-ha-multi-node-cluster"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-ha-multi-node-cluster --kubeconfig /var/folders/qs/bgb_rp717zg_t8w3kp493r9h0000gn/T//kind-ha-multi-node-config
+
+Have a question, bug, or feature request? Let us know! https://kind.sigs.k8s.io/#community 🙂
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl cluster-info --context kind-ha-multi-node-cluster --kubeconfig /var/folders/qs/bgb_rp717zg_t8w3kp493r9h0000gn/T//kind-ha-multi-node-config
+Kubernetes control plane is running at https://127.0.0.1:60420
+CoreDNS is running at https://127.0.0.1:60420/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+3. You can use the cluster using below command :
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl cluster-info --context kind-ha-multi-node-cluster --kubeconfig /var/folders/qs/bgb_rp717zg_t8w3kp493r9h0000gn/T//kind-ha-multi-node-config
+Kubernetes control plane is running at https://127.0.0.1:60420
+CoreDNS is running at https://127.0.0.1:60420/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+4. if the cluster has authentication issue, like the below
+
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl get nodes
+E1102 16:38:11.179772   40733 memcache.go:265] "Unhandled Error" err=<
+	couldn't get current server API group list: <html><head><meta http-equiv='refresh' content='1;url=/login?from=%2Fapi%3Ftimeout%3D32s'/><script>window.location.replace('/login?from=%2Fapi%3Ftimeout%3D32s');</script></head><body style='background-color:white; color:white;'>
+
+
+	Authentication required
+	<!--
+	-->
+
+	</body></html>
+ >
+
+It's the kube-config issue.
+
+To debug further Try to check what is the current-context set .
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl config current-context kind-ha-multi-node-cluster
+error: current-context is not set
+
+Fix -
+
+Then run this command to fix the issue
+
+manishkumarroy@Manishs-MacBook-Pro kind % kind get kubeconfig --name ha-multi-node-cluster >~/.kube/config
+
+Check if you are able to access the nodes
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl get no
+NAME                                   STATUS   ROLES           AGE   VERSION
+ha-multi-node-cluster-control-plane    Ready    control-plane   26m   v1.31.0
+ha-multi-node-cluster-control-plane2   Ready    control-plane   26m   v1.31.0
+ha-multi-node-cluster-control-plane3   Ready    control-plane   23m   v1.31.0
+ha-multi-node-cluster-worker           Ready    <none>          22m   v1.31.0
+ha-multi-node-cluster-worker2          Ready    <none>          22m   v1.31.0
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+Now you will get the current context also.
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl config current-context
+kind-ha-multi-node-cluster
+
+Shortcoming of kind :
+
+Kind Does not comes with Metrics Server in local setup, so you can not run kubectl top node or kubectl top pod commands.
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl top node ha-multi-node-cluster-control-plane
+error: Metrics API not available
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+Still you can describe the node using kubectl.
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl describe node ha-multi-node-cluster-control-plane
+Name:               ha-multi-node-cluster-control-plane
+Roles:              control-plane
+Labels:             beta.kubernetes.io/arch=arm64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=arm64
+                    kubernetes.io/hostname=ha-multi-node-cluster-control-plane
+                    kubernetes.io/os=linux
+                    node-role.kubernetes.io/control-plane=
+                    node.kubernetes.io/exclude-from-external-load-balancers=
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Sat, 02 Nov 2024 16:14:49 +0530
+
+.....
+.....
+
+Events:
+  Type     Reason                             Age   From             Message
+  ----     ------                             ----  ----             -------
+  Normal   Starting                           61m   kube-proxy
+  Warning  PossibleMemoryBackedVolumesOnDisk  61m   kubelet          The tmpfs noswap option is not supported. Memory-backed volumes (e.g. secrets, emptyDirs, etc.) might be swapped to disk and should no longer be considered secure.
+  Normal   Starting                           61m   kubelet          Starting kubelet.
+  Normal   NodeAllocatableEnforced            61m   kubelet          Updated Node Allocatable limit across pods
+  Normal   NodeHasSufficientMemory            61m   kubelet          Node ha-multi-node-cluster-control-plane status is now: NodeHasSufficientMemory
+  Normal   NodeHasNoDiskPressure              61m   kubelet          Node ha-multi-node-cluster-control-plane status is now: NodeHasNoDiskPressure
+  Normal   NodeHasSufficientPID               61m   kubelet          Node ha-multi-node-cluster-control-plane status is now: NodeHasSufficientPID
+  Normal   RegisteredNode                     61m   node-controller  Node ha-multi-node-cluster-control-plane event: Registered Node ha-multi-node-cluster-control-plane in Controller
+  Normal   NodeReady                          61m   kubelet          Node ha-multi-node-cluster-control-plane status is now: NodeReady
+
+
+  To install the Metrics Server in a Kubernetes cluster created with kind, follow these steps:
+
+  1. Install Metrics Server Manifests.
+
+  The Metrics Server provides resource usage metrics (CPU and memory) across nodes and pods. The official deployment YAML file can be found in the Metrics Server GitHub repository.
+
+  kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+  2. Configure Metrics Server for Kind Compatibility
+
+  Kind uses a self-signed certificate for internal communication, which may cause SSL errors with Metrics Server. To handle this, modify the components.yaml file to set the --kubelet-insecure-tls argument.
+
+  So
+
+  3. Download the component.yaml locally and edit the file using without tsl certificate.
+
+  curl -LO https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+  4. Open components.yaml in an editor and add --kubelet-insecure-tls under args for the metrics-server container:
+
+  containers:
+  - name: metrics-server
+    image: k8s.gcr.io/metrics-server/metrics-server:v0.6.3
+    args:
+      - --cert-dir=/tmp
+      - --secure-port=443
+      - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
+      - --kubelet-insecure-tls # Add this line
+
+5. After modifying, apply the file:
+
+kubectl apply -f components.yaml
+
+6. Verify Metrics Server Installation
+
+kubectl get deployment metrics-server -n kube-system
+
+It should show as AVAILABLE. You can further test by running:
+
+kubectl top nodes
+kubectl top pods
+
+
+```
+Here is the output for the above command.
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl apply -f components.yaml
+serviceaccount/metrics-server created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/system:metrics-server created
+rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
+clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
+service/metrics-server created
+deployment.apps/metrics-server created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl get deployment metrics-server -n kube-system
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+metrics-server   1/1     1            1           56s
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl top node
+NAME                                   CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+ha-multi-node-cluster-control-plane    169m         2%     743Mi           18%
+ha-multi-node-cluster-control-plane2   139m         2%     535Mi           13%
+ha-multi-node-cluster-control-plane3   136m         2%     534Mi           13%
+ha-multi-node-cluster-worker           32m          0%     180Mi           4%
+ha-multi-node-cluster-worker2          19m          0%     150Mi           3%
+manishkumarroy@Manishs-MacBook-Pro kind %
+
+```
+
+How to check which control plane is leader among all three.
+
+kubectl logs -n kube-system kube-controller-manager-<node-name>
+
+manishkumarroy@Manishs-MacBook-Pro kind % kubectl logs -n kube-system kube-controller-manager-ha-multi-node-cluster-control-plane | grep -i leader
+I1102 10:44:39.095526       1 leaderelection.go:254] attempting to acquire leader lease kube-system/kube-controller-manager...
+E1102 10:44:40.744999       1 leaderelection.go:436] error retrieving resource lock kube-system/kube-controller-manager: leases.coordination.k8s.io "kube-controller-manager" is forbidden: User "system:kube-controller-manager" cannot get resource "leases" in API group "coordination.k8s.io" in the namespace "kube-system"
+I1102 10:44:43.012750       1 leaderelection.go:268] successfully acquired lease kube-system/kube-controller-manager
+I1102 10:44:43.013035       1 event.go:389] "Event occurred" object="kube-system/kube-controller-manager" fieldPath="" kind="Lease" apiVersion="coordination.k8s.io/v1" type="Normal" reason="LeaderElection" message="ha-multi-node-cluster-control-plane_10b0a19e-1b1d-48ad-9b02-7c11ced72573 became leader"
